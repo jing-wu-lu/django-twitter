@@ -11,7 +11,13 @@ class Tweet(models.Model):
         help_text='who posts this tweet',
     )
     content = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        index_together = (
+            ('user', 'created_at'),
+        )
+        ordering = ('user', '-created_at')
 
     @property
     def hours_to_now(self):
