@@ -1,4 +1,5 @@
 *.box
+bionic64.box
 .vagrant
 Vagrantfile
 .idea/
