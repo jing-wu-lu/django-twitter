@@ -17,6 +17,7 @@ class CommentViewSet(viewsets.GenericViewSet):
     """
     serializer_class = CommentSerializerForCreate
     queryset = Comment.objects.all()
+    filterset_fields = ('tweet_id',)
 
     def get_permissions(self):
         # 注意要加用 AllowAny() / IsAuthenticated() 实例化出对象
@@ -32,6 +33,29 @@ class CommentViewSet(viewsets.GenericViewSet):
     # DELETE /api/comments/1/ -> destroy
     # PATCH /api/comments/1/ -> partial update
     # PUT /api/comments/1/ -> update
+
+    def list(self, request, *args, **kwargs):
+        # query_params -> ?tweet_id=1 in url: /api/comments/?tweet_id=1
+        if 'tweet_id' not in request.query_params:
+            return Response({
+                'message': 'missing tweet_id in request',
+                'success': False,
+            }, status=status.HTTP_400_BAD_REQUEST)
+        # tweet_id = request.query_params['tweet_id']
+        # # ok to use Comment.objects.filter(tweet=tweet_id)
+        # comments = Comment.objects.filter(tweet_id=tweet_id)
+        queryset = self.get_queryset()
+        # comments = self.filter_queryset(queryset).order_by('created_at')
+        # optimize query with prefetch_related
+        comments = self.filter_queryset(queryset)\
+            .prefetch_related('user')\
+            .order_by('created_at')
+        serializer = CommentSerializer(comments, many=True)
+        return Response(
+            {'comments': serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
 
     def create(self, request, *args, **kwargs):
         data = {
