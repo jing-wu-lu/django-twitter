@@ -1,26 +1,34 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from tweets.api.serializers import TweetSerializer, TweetSerializerForCreate
+from tweets.api.serializers import (TweetSerializer,
+                                    TweetSerializerForCreate,
+                                    TweetSerializerWithComments,
+                                    )
 from tweets.models import Tweet
 from newsfeeds.services import NewsFeedService
+from utils.decorators import required_params
 
 
 class TweetViewSet(viewsets.GenericViewSet):
     # queryset = Tweet.objects.all()
     serializer_class = TweetSerializerForCreate
+    queryset = Tweet.objects.all()
 
     def get_permissions(self):
-        if self.action == 'list':
+        if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
 
+    @required_params(params=['user_id'])
     def list(self, request):
+        # GET request.query_params
+        # POST request.data
         # self.get_queryset()
         """reload list method, does not show all the tweets,
         must have selected user_id as the screening condition."""
-        if 'user_id' not in request.query_params:
-            return Response('missing user_id', status=400)
+        # if 'user_id' not in request.query_params:
+        #     return Response('missing user_id', status=400)
         # this query is translated into
         # select * from twitter_tweets
         # where user_id= xxx
@@ -32,6 +40,12 @@ class TweetViewSet(viewsets.GenericViewSet):
         serializer = TweetSerializer(tweets, many=True)
         # conventionaly, response uses JSON with hash format, not list format
         return Response({'tweets': serializer.data})
+
+    def retrieve(self, equest, *args, **kwargs):
+        # <Homework> 通过某个query 参数 with_all_comments 来决定是否需要带上所有 comments
+        # <Homework2> 通过某个 query 参数 with_preview_comments 来决定是否需要带上前三条 comments
+        tweet = self.get_object()
+        return Response(TweetSerializerWithComments(tweet).data)
 
     def create(self, request):
         """reload create method, default current logged in user as tweet.user"""
