@@ -1,16 +1,20 @@
-from inbox.api.serializers import NotificationSerialzier
+from inbox.api.serializers import (
+    NotificationSerializer,
+    NotificationSerializerForUpdate,
+)
 from notifications.models import Notification
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from utils.decorators import required_params
 
 
 class NotificationViewSet(
     viewsets.GenericViewSet,
     viewsets.mixins.ListModelMixin,
 ):
-    serializer_class = NotificationSerialzier
+    serializer_class = NotificationSerializer
     permission_classes = (IsAuthenticated,)
     filterset_fields = ('unread',)
 
@@ -27,3 +31,33 @@ class NotificationViewSet(
     def mark_all_as_read(self, request, *args, **kwargs):
         updated_count = self.get_queryset().filter(unread=True).update(unread=False)
         return Response({'marked_count': updated_count}, status=status.HTTP_200_OK)
+
+    @required_params(method='PUT', params=['unread'])
+    def update(self, request, *args, **kwargs):
+        # PUT /api/notifications/1/
+        """
+        用户可以标记一个 notification 为已读或未读。标记已读或未读都是对 notification 的一次
+        更新操作，所以直接重载 update 的方法来实现。另外的一种实现方法是用一个专属的 action：
+        @action(methods=['POST'], detail=True, url_path='mark-as-read']
+        def mark_as_read(self, request, *args, **kwargs)
+            ...
+        @action(methods=['POST'], detail=True, url_path='mark-as-unread')
+        def mark_as_unread(self, request, *args, **kwargs)
+            ...
+        两种方法都可以，update 的方法更 rest 一些，而且 mark as unread 和 mark as read 可以
+        共用一套逻辑。
+        """
+        serializer = NotificationSerializerForUpdate(
+            instance=self.get_object(),
+            data=request.data,
+        )
+        if not serializer.is_valid():
+            return Response({
+                'message': "Please check input",
+                'errors': serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
+        notification = serializer.save()
+        return Response(
+            NotificationSerializer(notification).data,
+            status=status.HTTP_200_OK,
+        )
