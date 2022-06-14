@@ -40,7 +40,7 @@ class TweetViewSet(viewsets.GenericViewSet):
         serializer = TweetSerializer(tweets,
                                      context={'request': request},
                                      many=True,)
-        # conventionaly, response uses JSON with hash format, not list format
+        # conventionally, response uses JSON with hash format, not list format
         return Response({'tweets': serializer.data})
 
     def retrieve(self, request, *args, **kwargs):
