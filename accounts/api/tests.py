@@ -57,25 +57,25 @@ class AccountApiTests(TestCase):
         self.assertEqual(response.data['has_logged_in'], True)
 
     def test_logout(self):
-        #
+        # 先登录
         self.client.post(LOGIN_URL, {
             'username': self.user.username,
             'password': 'correct password',
         })
 
-        #
+        # 验证用户已登录
         response = self.client.get(LOGIN_STATUS_URL)
         self.assertEqual(response.data['has_logged_in'], True)
 
-        #
+        # 测试必须用 post
         response = self.client.get(LOGOUT_URL)
         self.assertEqual(response.status_code, 405)
 
-        #
+        # 改用 post 成功 logout
         response = self.client.post(LOGOUT_URL)
         self.assertEqual(response.status_code, 200)
 
-        #
+        # 验证用户已经登出
         response = self.client.get(LOGIN_STATUS_URL)
         self.assertEqual(response.data['has_logged_in'], False)
 
@@ -86,11 +86,11 @@ class AccountApiTests(TestCase):
             'password': 'any password',
         }
 
-        #
+        # 测试 get 请求失败
         response = self.client.get(SIGNUP_URL, data)
         self.assertEqual(response.status_code, 405)
 
-        #
+        # 测试错误的邮箱
         response = self.client.post(SIGNUP_URL, {
             'username': 'someone',
             'email': 'not a correct email',
