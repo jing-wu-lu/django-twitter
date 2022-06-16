@@ -1,3 +1,4 @@
+from newsfeeds.services import NewsFeedService
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -6,14 +7,19 @@ from tweets.api.serializers import (TweetSerializer,
                                     TweetSerializerForDetail,
                                     )
 from tweets.models import Tweet
-from newsfeeds.services import NewsFeedService
 from utils.decorators import required_params
+from utils.paginations import EndlessPagination
 
 
 class TweetViewSet(viewsets.GenericViewSet):
     # queryset = Tweet.objects.all()
     serializer_class = TweetSerializerForCreate
     queryset = Tweet.objects.all()
+    pagination_class = EndlessPagination
+
+    # POST /api/tweets/ -> create
+    # GET /api/tweets/?tweet_id=1 -> list
+    # GET /api/tweets/1/ -> retrieve
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -37,11 +43,13 @@ class TweetViewSet(viewsets.GenericViewSet):
         # only user as index is not enough
         user_id = request.query_params['user_id']
         tweets = Tweet.objects.filter(user_id=user_id).order_by('-created_at')
+        tweets = self.paginate_queryset(tweets)
         serializer = TweetSerializer(tweets,
                                      context={'request': request},
                                      many=True,)
         # conventionally, response uses JSON with hash format, not list format
-        return Response({'tweets': serializer.data})
+        # return Response({'tweets': serializer.data})
+        return self.get_paginated_response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         # <Homework> 通过某个query 参数 with_all_comments 来决定是否需要带上所有 comments
