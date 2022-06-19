@@ -146,7 +146,7 @@ STATIC_URL = '/static/'
 # media  里是用户上传的数据文件，而不是代码
 
 MEDIA_ROOT = 'media/'
-MEDIA_URL = '/media/'
+# MEDIA_URL = '/media/'
 
 # 设置存储用户上传文件的 storage 用什么系统
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
@@ -165,6 +165,24 @@ AWS_S3_REGION_NAME = 'us-east-2'
 # 这样这些机密的信息就可以只被负责运维的核心开发人员掌控，而非所有开发者，降低泄露风险
 # AWS_ACCESS_KEY_ID = 'YOUR_ACCESS_KEY_ID'
 # AWS_SECRET_ACCESS_KEY = 'YOUR_SECRET_ACCESS_KEY'
+
+# https://docs.djangoproject.com/en/3.1/topics/cache/
+# sudo apt-get install memcached
+# use 'pip install python-memcached'
+# Do Not pip install memcache or django-memcached
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400,
+    },
+    'testing': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'TIMEOUT': 86400,
+        'KEY_PREFIX': 'testing',
+    },
+}
 
 try:
     from .local_settings import *
