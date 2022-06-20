@@ -1,5 +1,7 @@
-from django.db import models
+from accounts.listeners import user_changed, profile_changed
 from django.contrib.auth.models import User
+from django.db import models
+from django.db.models.signals import post_save, pre_delete
 
 
 class UserProfile(models.Model):
@@ -25,9 +27,14 @@ class UserProfile(models.Model):
 # 访问到对应的 profile 信息
 
 def get_profile(user):
+    # 内部引用避免循环引用的报错
+    from accounts.services import UserService
     if hasattr(user, '_cached_user_profile'):
         return getattr(user, '_cached_user_profile')
-    profile, _ = UserProfile.objects.get_or_create(user=user)
+    # 从数据库取
+    # profile, _ = UserProfile.objects.get_or_create(user=user)
+    # 从缓存取
+    profile = UserService.get_profile_through_cache(user.id)
     # 使用 user 对象的属性进行缓存（cache), 避免多次调用同一个 user 的 profile 时，
     # 重复的对数据库进行查询
     setattr(user, '_cached_user_profile', profile)
@@ -37,3 +44,10 @@ def get_profile(user):
 # 给 User Model 增加了一个 profile 的 property 方法用于快捷访问
 User.profile = property(get_profile)
 
+
+# hook up with listeners to invalidate cache
+pre_delete.connect(user_changed, sender=User)
+post_save.connect(user_changed, sender=User)
+
+pre_delete.connect(profile_changed, sender=UserProfile)
+post_save.connect(profile_changed, sender=UserProfile)

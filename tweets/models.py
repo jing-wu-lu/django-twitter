@@ -1,3 +1,4 @@
+from accounts.services import UserService
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -22,6 +23,10 @@ class Tweet(models.Model):
         )
         ordering = ('user', '-created_at')
 
+    def __str__(self):
+        # display print(tweet instance)
+        return f'{self.created_at} {self.user}: {self.content}'
+
     @property
     def hours_to_now(self):
         # datetime.now doesn't have time zone information, need to add utc
@@ -38,9 +43,9 @@ class Tweet(models.Model):
     # def comments(self):
     #     # return Comment.objects.filter(tweet=self)
     #     return self.comment_set.all()
-    def __str__(self):
-        # display print(tweet instance)
-        return f'{self.created_at} {self.user}: {self.content}'
+    @property
+    def cached_user(self):
+        return UserService.get_user_through_cache(self.user_id)
 
 
 class TweetPhoto(models.Model):
@@ -79,5 +84,3 @@ class TweetPhoto(models.Model):
 
     def __str__(self):
         return f'{self.tweet_id}: {self.file}'
-
-
