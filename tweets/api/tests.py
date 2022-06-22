@@ -194,6 +194,10 @@ class TweetApiTests(TestCase):
         self.assertEqual(response.data['results'][page_size - 1]['id'], tweets[page_size - 1].id)
 
         # pull the second page
+        # response = self.user1_client.get(TWEET_LIST_API, {
+        #     'created_at__lt': tweets[page_size - 1].created_at,
+        #     'user_id': self.user1.id,
+        # })
         response = self.user1_client.get(TWEET_LIST_API, {
             'created_at__lt': tweets[page_size - 1].created_at,
             'user_id': self.user1.id,
