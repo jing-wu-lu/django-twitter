@@ -141,6 +141,7 @@ class NewsFeedApiTests(TestCase):
         response = self.dongxie_client.get(NEWSFEEDS_URL)
         results = response.data['results']
         self.assertEqual(results[0]['tweet']['content'], 'content2')
-        
+
+
 
 
