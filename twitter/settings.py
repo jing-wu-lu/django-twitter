@@ -150,7 +150,7 @@ MEDIA_ROOT = 'media/'
 
 # 设置存储用户上传文件的 storage 用什么系统
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-TESTING = (("".join(sys.argv)).find('manage.py test') != -1)
+TESTING = ((" ".join(sys.argv)).find('manage.py test') != -1)
 if TESTING:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
@@ -183,6 +183,15 @@ CACHES = {
         'KEY_PREFIX': 'testing',
     },
 }
+
+
+# Redis
+# 安装方法: sudo apt-get install redis
+# 然后安装 redis 的 python 客户端： pip install redis
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+REDIS_DB = 0 if TESTING else 1
+REDIS_KEY_EXPIRE_TIME = 7 * 86400  # in seconds
 
 try:
     from .local_settings import *
