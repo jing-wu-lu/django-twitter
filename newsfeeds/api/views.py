@@ -1,5 +1,6 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from newsfeeds.models import NewsFeed
 from newsfeeds.services import NewsFeedService
 from newsfeeds.api.serializers import NewsFeedSerializer
 from utils.paginations import EndlessPagination
@@ -25,8 +26,14 @@ class NewsFeedViewSet(viewsets.GenericViewSet):
         # return Response({
         #     'newsfeeds': serializer.data,
         # }, status=status.HTTP_200_OK)
-        queryset = NewsFeedService.get_cached_newsfeeds(request.user.id)
-        page = self.paginate_queryset(queryset)
+        # queryset = NewsFeedService.get_cached_newsfeeds(request.user.id)
+        # page = self.paginate_queryset(queryset)
+        cached_newsfeeds = NewsFeedService.get_cached_newsfeeds(request.user.id)
+        page = self.paginator.paginate_cached_list(cached_newsfeeds, request)
+        # page 是 None 代表现在请求的数据可能不在 cache 里，需要直接去 db 来获取
+        if page is None:
+            queryset = NewsFeed.objects.filter(user=request.user)
+            page = self.paginate_queryset(queryset)
         serializer = NewsFeedSerializer(
             page,
             context={'request': request},
