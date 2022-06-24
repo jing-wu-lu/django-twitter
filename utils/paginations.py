@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 
 class EndlessPagination(BasePagination):
-    page_size = 20  # if not settings.TESTING else 10
+    page_size = 20 if not settings.TESTING else 10
 
     def __init__(self):
         super(EndlessPagination, self).__init__()
