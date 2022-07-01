@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-import sys
+from kombu import Queue
 from pathlib import Path
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -184,7 +185,6 @@ CACHES = {
     },
 }
 
-
 # Redis
 # 安装方法: sudo apt-get install redis
 # 然后安装 redis 的 python 客户端： pip install redis
@@ -199,6 +199,21 @@ REDIS_LIST_LENGTH_LIMIT = 200 if not TESTING else 20
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2' if not TESTING else 'redis://127.0.0.1:6379/0'
 CELERY_TIMEZONE = 'UTC'
 CELERY_TASK_ALWAYS_EAGER = TESTING
+CELERY_QUEUES = (
+    Queue('default', routing_key='default'),
+    Queue('newsfeeds', routing_key='newsfeeds'),
+)
+
+# import os
+#
+# if os.environ.get('WORKER_TYPE') == 'newsfeeds':
+#     CELERY_QUEUES = (
+#         Queue('newsfeeds', routing_key='newsfeeds'),
+#     )
+# else:
+#     CELERY_QUEUES = (
+#         Queue('default', routing_key='default'),
+#     )
 
 try:
     from .local_settings import *
