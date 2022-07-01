@@ -21,6 +21,10 @@ class FriendshipService(object):
     #         from_user=from_user,
     #         to_user=to_user,
     #     ).exists()
+    @classmethod
+    def get_follower_ids(cls, to_user_id):
+        friendships = Friendship.objects.filter(to_user_id=to_user_id)
+        return [friendship.from_user_id for friendship in friendships]
 
     @classmethod
     def get_following_user_id_set(cls, from_user_id):
