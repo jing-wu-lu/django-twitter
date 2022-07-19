@@ -1,15 +1,17 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from comments.models import Comment
 from comments.api.serializers import (
     CommentSerializer,
     CommentSerializerForCreate,
     CommentSerializerForUpdate,
 )
-from utils.permissions import IsObjectOwner
-from utils.decorators import required_params
+from comments.models import Comment
+from django.utils.decorators import method_decorator
 from inbox.services import NotificationService
+from ratelimit.decorators import ratelimit
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from utils.decorators import required_params
+from utils.permissions import IsObjectOwner
 
 
 class CommentViewSet(viewsets.GenericViewSet):
@@ -37,6 +39,7 @@ class CommentViewSet(viewsets.GenericViewSet):
     # PUT /api/comments/1/ -> update
 
     @required_params(params=['tweet_id'])
+    @method_decorator(ratelimit(key='user', rate='3/m', method='GET', block=True))
     def list(self, request, *args, **kwargs):
         # query_params -> ?tweet_id=1 in url: /api/comments/?tweet_id=1
         # if 'tweet_id' not in request.query_params:
@@ -63,6 +66,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @method_decorator(ratelimit(key='user', rate='3/m', method='POST', block=True))
     def create(self, request, *args, **kwargs):
         data = {
             'user_id': request.user.id,
@@ -85,6 +89,7 @@ class CommentViewSet(viewsets.GenericViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @method_decorator(ratelimit(key='user', rate='3/s', method='POST', block=True))
     def update(self, request, *args, **kwargs):
         # get_object 是 DRF 包装的一个函数，会在找不到的时候 raise 404 error
         # 所以这里无需做额外的判断
@@ -106,6 +111,7 @@ class CommentViewSet(viewsets.GenericViewSet):
         )
 
     # Delete
+    @method_decorator(ratelimit(key='user', rate='5/s', method='POST', block=True))
     def destroy(self, request, *args, **kwargs):
         comment = self.get_object()
         comment.delete()
