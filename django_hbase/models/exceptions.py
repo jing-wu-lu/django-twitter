@@ -3,4 +3,7 @@ class EmptyColumnError(Exception):
 
 
 class BadRowKeyError(Exception):
-    pass
+
+    def __str__(self):
+        return 'created_at is missing in row key'
+
